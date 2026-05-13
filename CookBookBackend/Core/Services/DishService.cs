@@ -3,9 +3,10 @@ using CookBookBackend.Api.DTO.Dish;
 using CookBookBackend.Api.DTO.FoodItem;
 using CookBookBackend.Core.Enums;
 using CookBookBackend.Core.Exceptions;
-using CookBookBackend.Core.Utils;
+using CookBookBackend.Core.ValueObjects;
 using CookBookBackend.Data;
 using CookBookBackend.Data.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace CookBookBackend.Core.Services
@@ -18,8 +19,9 @@ namespace CookBookBackend.Core.Services
         private readonly ILogger<DishService> _logger;
         private readonly PhotoService _photoService;
         private readonly string _photoFolderPath;
+        private readonly NutritionFactsService _nutritionService;
 
-        public DishService(IMapper mapper, AppDbContext context, IWebHostEnvironment env, ILogger<DishService> logger, PhotoService photoService)
+        public DishService(IMapper mapper, AppDbContext context, IWebHostEnvironment env, ILogger<DishService> logger, PhotoService photoService, NutritionFactsService nutritionService)
         {
             _mapper = mapper;
             _context = context;
@@ -27,6 +29,7 @@ namespace CookBookBackend.Core.Services
             _logger = logger;
             _photoService = photoService;
             _photoFolderPath = Path.Combine(_env.WebRootPath, "images", "food_items");
+            _nutritionService = nutritionService;
         }
 
         public async Task<DishCreateResultDTO> CreateDishAsync(DishCreateDTO dto)
@@ -50,11 +53,11 @@ namespace CookBookBackend.Core.Services
                 });
             }
 
-            NutritionalValues values = DishNutritionCalculator.CalculateFromIngredients(dish.Ingredients);
-            //if (dto.Calories == null) dish.Calories = values.Calories;
-            //if (dto.Proteins == null) dish.Proteins = values.Proteins;
-            //if (dto.Fats == null) dish.Fats = values.Fats;
-            //if (dto.Carbohydrates == null) dish.Carbohydrates = values.Carbohydrates;
+            NutritionFacts values = _nutritionService.CalculateFromIngredients(dish.Ingredients);
+            if (dto.Calories == null) dish.Calories = values.Calories;
+            if (dto.Proteins == null) dish.Proteins = values.Proteins;
+            if (dto.Fats == null) dish.Fats = values.Fats;
+            if (dto.Carbohydrates == null) dish.Carbohydrates = values.Carbohydrates;
 
 
             _context.Dishes.Add(dish);
@@ -85,6 +88,7 @@ namespace CookBookBackend.Core.Services
             }
         }
 
+
         public async Task<DishEditResultDTO> EditDishAsync(int id, DishEditDTO dto)
         {
             var toChange = await _context.Dishes
@@ -99,8 +103,18 @@ namespace CookBookBackend.Core.Services
 
             _mapper.Map(dto, toChange);
 
+            if (dto.Ingredients != null)
+            {
+                if (!dto.Ingredients.Any())
+                    throw new ArgumentException("Dish must have at least one ingredient");
+                toChange.Ingredients = _mapper.Map<List<DishIngredient>>(dto.Ingredients);
+            }
+
+
             if (dto.Photos != null && dto.Photos.Any())
             {
+                if (toChange.PhotoPaths == null)
+                    toChange.PhotoPaths = new List<string>();
                 toChange.PhotoPaths.AddRange(await _photoService.SavePhotosAsync(dto.Photos, _photoFolderPath));
             }
             if (dto.PhotoUrlsToDelete != null && dto.PhotoUrlsToDelete.Any())
@@ -108,18 +122,18 @@ namespace CookBookBackend.Core.Services
                 foreach (var url in dto.PhotoUrlsToDelete)
                 {
                     var pathToRemove = _photoService.ConvertUrlToRelativePath(url);
-                    toChange.PhotoPaths.Remove(pathToRemove);
+                    toChange.PhotoPaths?.Remove(pathToRemove);
                     _photoService.DeleteFileByUrl(url);
                 }
             }
 
             await _context.SaveChangesAsync();
 
-            return _mapper.Map<DishEditResultDTO>(toChange);
+            var toReturn = _mapper.Map<DishEditResultDTO>(toChange);
+            return toReturn;
         }
 
-
-        public async Task<List<DishDetailedDTO>> GetFoodItemsAsync(string? toSearch, DishCategory? category, DietaryFlags? flags)
+        public async Task<List<DishPreviewDTO>> GetFoodItemsAsync(string? toSearch, DishCategory? category, DietaryFlags? flags)
         {
             var query = _context.Dishes.AsQueryable();
 
@@ -147,8 +161,18 @@ namespace CookBookBackend.Core.Services
                 .OrderBy(f => f.Name)
                 .ToListAsync();
 
-            return _mapper.Map<List<DishDetailedDTO>>(items);
+            return _mapper.Map<List<DishPreviewDTO>>(items);
         }
 
+        public async Task<DishDetailedDTO> GetDishDetailedAsync(int id)
+        {
+            var toGet = await _context.Dishes.FindAsync(id);
+            if (toGet == null)
+                throw new EntityNotFoundException("Dish", id);
+
+
+
+            return _mapper.Map<DishDetailedDTO>(toGet);
+        }
     }
 }

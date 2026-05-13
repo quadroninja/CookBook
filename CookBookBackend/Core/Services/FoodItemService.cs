@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CookBookBackend.Api.DTO.Dish;
 using CookBookBackend.Api.DTO.FoodItem;
 using CookBookBackend.Core.Enums;
 using CookBookBackend.Core.Exceptions;
@@ -146,6 +147,15 @@ namespace CookBookBackend.Core.Services
             }
         }
 
-        
+        public async Task<FoodItemDetailedDTO> GetFoodItemDetailedAsync(int id)
+        {
+            var toGet = await _context.FoodItems.FindAsync(id);
+            if (toGet == null)
+                throw new EntityNotFoundException("FoodItem", id);
+
+
+
+            return _mapper.Map<FoodItemDetailedDTO>(toGet);
+        }
     }
 }

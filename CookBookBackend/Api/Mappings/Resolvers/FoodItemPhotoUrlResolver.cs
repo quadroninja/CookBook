@@ -21,5 +21,6 @@ namespace CookBookBackend.Api.Mappings.Resolvers
 
             return source.PhotoPaths.Select(path => $"{baseUrl}/{path}").ToList();
         }
+
     }
 }

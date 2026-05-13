@@ -29,21 +29,17 @@ namespace CookBookBackend.Api.DTO.Validators
                 .NotEmpty()
                 .WithMessage("Name should not be empty");
             RuleFor(dish => dish.Calories)
-                .NotNull()
                 .GreaterThanOrEqualTo(0)
-                .WithMessage("Calories should not be null or negative");
+                .WithMessage("Calories should not negative");
             RuleFor(dish => dish.Proteins)
-                .NotNull()
                 .GreaterThanOrEqualTo(0)
-                .WithMessage("Proteins should not be null or negative");
+                .WithMessage("Proteins should not be negative");
             RuleFor(dish => dish.Fats)
-                .NotNull()
                 .GreaterThanOrEqualTo(0)
-                .WithMessage("Fats should not be null or negative");
+                .WithMessage("Fats should not be negative");
             RuleFor(dish => dish.Carbohydrates)
-                .NotNull()
                 .GreaterThanOrEqualTo(0)
-                .WithMessage("Carbohydrates should not be null or negative");
+                .WithMessage("Carbohydrates should not be negative");
 
             RuleFor(foodItem => foodItem.Category)
                 .Must(category => category != DishCategory.NONE);
@@ -52,16 +48,20 @@ namespace CookBookBackend.Api.DTO.Validators
                 .Must(dietaryFlags => IsValidDietaryFlags(dietaryFlags))
                 .WithMessage("Invalid dietary flags");
 
+            RuleFor(dish => dish.Ingredients)
+                .NotNull().WithMessage("Ingredients list cannot be null")
+                .Must(ingredients => ingredients?.Any() ?? false).WithMessage("A dish must contain at least one ingredient");
+
             RuleForEach(dish => dish.Ingredients)
-                .SetValidator(new IngredientsValidator());
-        }
-        internal class IngredientsValidator : AbstractValidator<DishIngredientCreateDTO>
-        {
-            public IngredientsValidator()
-            {
-                RuleFor(ingredient => ingredient.FoodItemId).NotNull();
-                RuleFor(ingredient => ingredient.AmountGrams).NotNull();
-            }
+                .ChildRules(ingredient =>
+                {
+                    ingredient.RuleFor(i => i.FoodItemId)
+                        .GreaterThanOrEqualTo(0)
+                        .WithMessage("Food Item id is invalid (should be non-negative)");
+                    ingredient.RuleFor(i => i.AmountGrams)
+                        .GreaterThan(0)
+                        .WithMessage("Amount of ingredient should be greater than 0");
+                });
         }
         private bool IsValidDietaryFlags(DietaryFlags flags)
         {

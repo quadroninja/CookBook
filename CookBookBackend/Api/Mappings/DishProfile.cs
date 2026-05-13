@@ -16,7 +16,8 @@ namespace CookBookBackend.Api.Mappings
             CreateMap<DishIngredient, DishIngredientCreateDTO>()
                 .ForMember(dest => dest.DishId, opt => opt.MapFrom(src => src.DishId))
                 .ForMember(dest => dest.FoodItemId, opt => opt.MapFrom(src => src.FoodItemId))
-                .ForMember(dest => dest.AmountGrams, opt => opt.MapFrom(src => src.AmountGrams));
+                .ForMember(dest => dest.AmountGrams, opt => opt.MapFrom(src => src.AmountGrams))
+                .ReverseMap();
             CreateMap<DishIngredient, DishIngredientDetailedDTO>()
                 .ForMember(dest => dest.FoodItemId, opt => opt.MapFrom(src => src.FoodItemId))
                 .ForMember(dest => dest.FoodItemName, opt => opt.MapFrom(src => src.FoodItem.Name))
@@ -37,8 +38,10 @@ namespace CookBookBackend.Api.Mappings
 
             CreateMap<Dish, DishDetailedDTO>()
                 .ForMember(dest => dest.PhotoUrls, opt => opt.MapFrom<DishPhotoUrlResolver<DishDetailedDTO>>());
+            CreateMap<Dish, DishPreviewDTO>()
+                .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom<DishFirstPhotoUrlResolver<DishPreviewDTO>>());
 
-            
+
             CreateMap<DishEditDTO, Dish>()
                     .ForMember(d => d.Name,
                         o => o.PreCondition(s => s.Name != null))
@@ -53,7 +56,9 @@ namespace CookBookBackend.Api.Mappings
                     .ForMember(d => d.Category,
                         o => o.PreCondition(s => s.Category.HasValue && s.Category != DishCategory.NONE))
                     .ForMember(d => d.DietaryFlags,
-                        o => o.PreCondition(s => s.DietaryFlags != DietaryFlags.NONE));
+                        o => o.PreCondition(s => s.DietaryFlags != null))
+                    .ForMember(d => d.Ingredients,
+                        o => o.Ignore());
         }
     }
 }

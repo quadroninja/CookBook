@@ -17,11 +17,15 @@ namespace CookBookBackend.Api.Mappings
                 .ForMember(dest => dest.PhotoUrls,
                     opt => opt.MapFrom<FoodItemPhotoUrlResolver<FoodItemCreateResultDTO>>());
 
+            CreateMap<FoodItem, FoodItemPreviewDTO>()
+                .ForMember(dest => dest.PhotoUrl,
+                    opt => opt.MapFrom<FoodItemFirstPhotoUrlResolver<FoodItemPreviewDTO>>());
+            CreateMap<FoodItem, FoodItemDetailedDTO>()
+                .ForMember(dest => dest.PhotoUrls, 
+                    opt => opt.MapFrom<FoodItemPhotoUrlResolver<FoodItemDetailedDTO>>());
+
 
             CreateMap<FoodItemCreateDTO, FoodItem>();
-            CreateMap<FoodItem, FoodItemDetailedDTO>()
-                .ForMember(dest => dest.PhotoUrls, opt => opt.MapFrom<FoodItemPhotoUrlResolver<FoodItemDetailedDTO>>());
-
             CreateMap<FoodItemEditDTO, FoodItem>()
                     .ForMember(d => d.Name,
                         o => o.PreCondition(s => s.Name != null))

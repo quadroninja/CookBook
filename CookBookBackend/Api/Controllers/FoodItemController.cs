@@ -102,6 +102,15 @@ namespace CookBookBackend.Api.Controllers
             
         }
 
+        [HttpGet("get/{id}")]
+        public async Task<IActionResult> GetDishDetailed([FromRoute] int id)
+        {
+            try
+            {
+                return Ok(await _service.GetFoodItemDetailedAsync(id));
+            }
+            catch (EntityNotFoundException ex) { return NotFound(new { ex.Message, ex.GetType().Name }); }
+        }
 
     }
 }

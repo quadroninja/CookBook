@@ -33,6 +33,20 @@ namespace CookBookBackend.Api.Validators
                 .Select(f => f)
                 .Aggregate((DietaryFlags)0, (current, f) => current | f);
 
+            RuleFor(dish => dish.Ingredients)
+                .Must(ingredients => ingredients?.Any() ?? true).WithMessage("A dish must contain at least one ingredient"); // если null - значит не меняем
+
+            RuleForEach(dish => dish.Ingredients) 
+                .ChildRules(ingredient =>
+                {
+                    ingredient.RuleFor(i => i.FoodItemId)
+                        .GreaterThanOrEqualTo(0)
+                        .WithMessage("Food Item id is invalid (should be non-negative)");
+                    ingredient.RuleFor(i => i.AmountGrams)
+                        .GreaterThan(0)
+                        .WithMessage("Amount of ingredient should be greater than 0");
+                });
+
             RuleFor(dish => dish)
                 .Must(dish => 
                     PhotosEditValidityCheck(dish, 
@@ -61,6 +75,7 @@ namespace CookBookBackend.Api.Validators
         }
 
 
+        
 
         private bool IsValidDietaryFlags(DietaryFlags flags)
         {

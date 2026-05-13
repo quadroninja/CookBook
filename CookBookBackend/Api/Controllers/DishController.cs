@@ -67,20 +67,34 @@ namespace CookBookBackend.Api.Controllers
         [HttpPatch("edit/{id}")]
         public async Task<IActionResult> EditDish([FromRoute] int id, [FromForm] DishEditDTO editDto, IValidator<DishEditDTO> _validator)
         {
-            var validationResult = _validator.Validate(editDto);
-            if (!validationResult.IsValid)
+            try
             {
-                return BadRequest(new
+                var validationResult = _validator.Validate(editDto);
+                if (!validationResult.IsValid)
                 {
-                    Success = false,
-                    Errors = validationResult.Errors.Select(x => new { x.PropertyName, x.ErrorMessage })
-                });
+                    return BadRequest(new
+                    {
+                        Success = false,
+                        Errors = validationResult.Errors.Select(x => new { x.PropertyName, x.ErrorMessage })
+                    });
+                }
+                var toReturn = await _service.EditDishAsync(id, editDto);
+                return Ok(toReturn);
             }
-
-            return Ok(await _service.EditDishAsync(id, editDto));
+            catch (EntityNotFoundException ex) { return NotFound(new {ex.Message, ex.GetType().Name}); }
+            catch (ArgumentException ex) { return BadRequest(new { ex.Message, ex.GetType().Name }); }
 
         }
 
+        [HttpGet("get/{id}")]
+        public async Task<IActionResult> GetDishDetailed([FromRoute] int id)
+        {
+            try
+            {
+                return Ok(await _service.GetDishDetailedAsync(id));
+            }
+            catch (EntityNotFoundException ex) { return NotFound(new { ex.Message, ex.GetType().Name }); }
+        }
 
     }
 }

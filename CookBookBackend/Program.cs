@@ -24,6 +24,7 @@ builder.Services.AddAutoMapper(cfg => { }, typeof(Program));
 builder.Services.AddScoped<FoodItemService, FoodItemService>();
 builder.Services.AddScoped<DishService, DishService>();
 builder.Services.AddScoped<PhotoService, PhotoService>();
+builder.Services.AddScoped<NutritionFactsService, NutritionFactsService>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers(options =>
