@@ -32,6 +32,60 @@ namespace CookBookBackend.Api.Validators
                 .Select(f => f)
                 .Aggregate((DietaryFlags)0, (current, f) => current | f);
 
+
+
+            RuleFor(foodItem => foodItem.Photos)
+                .Must(photos => photos.Count <= 5)
+                .When(foodItem => foodItem != null && foodItem.Photos is not null)
+                .WithMessage($"Maximum 5 photos allowed");
+            RuleFor(foodItem => foodItem.Name.Trim())
+                .NotEmpty()
+                .When(dto => dto != null)
+                .WithMessage("Name should not be empty");
+            RuleFor(foodItem => foodItem.Calories)
+                .NotNull()
+                .GreaterThanOrEqualTo(0m)
+                .When(dto => dto != null)
+                .WithMessage("Calories should not be null or negative");
+            RuleFor(foodItem => foodItem.Proteins)
+                .NotNull()
+                .GreaterThanOrEqualTo(0m)
+                .LessThanOrEqualTo(100m)
+                .When(dto => dto != null)
+                .WithMessage("Proteins should be in [0; 100]");
+            RuleFor(foodItem => foodItem.Fats)
+                .NotNull()
+                .GreaterThanOrEqualTo(0)
+                .LessThanOrEqualTo(100m)
+                .When(dto => dto != null)
+                .WithMessage("Fats should be in [0; 100]");
+            RuleFor(foodItem => foodItem.Carbohydrates)
+                .NotNull()
+                .GreaterThanOrEqualTo(0)
+                .LessThanOrEqualTo(100m)
+                .When(dto => dto != null)
+                .WithMessage("Carbohydrates should be in [0; 100]");
+
+            RuleFor(foodItem => foodItem)
+                .Must(fi => fi.Proteins + fi.Fats + fi.Carbohydrates <= 100)
+                .When(dto => dto != null)
+                .WithMessage("Sum of macronutrients must be less than 100 (g/100g)");
+
+            RuleFor(foodItem => foodItem.Category)
+                .NotEqual(FoodItemCategory.NONE)
+                .When(dto => dto != null)
+                .WithMessage("FoodItemCategory should be specified");
+
+            RuleFor(foodItem => foodItem.ReadinessToEat)
+                .NotEqual(ReadinessToEat.NONE)
+                .When(dto => dto != null)
+                .WithMessage("Food Item ReadinessToEat should be specified");
+
+            RuleFor(foodItem => foodItem.DietaryFlags)
+                .Must(dietaryFlags => dietaryFlags == null || IsValidDietaryFlags(dietaryFlags.Value))
+                .When(dto => dto != null)
+                .WithMessage("Invalid dietary flags");
+
             RuleFor(foodItem => foodItem)
                 .Must(foodItem => 
                     PhotosEditValidityCheck(foodItem, 

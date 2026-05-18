@@ -36,6 +36,22 @@ builder.Services.AddControllers(options =>
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 
     });
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("null") // локальный запуск (origin - file://)
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+        policy.WithOrigins("http://127.0.0.1:5500") // Live Server в VS 
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+
+        policy.WithOrigins("http://localhost:5500") // Live Server в VS 
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 
 var app = builder.Build();
@@ -45,11 +61,18 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "Swagger"));
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Swagger");
+    });
 }
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRouting();
+
+app.UseCors();
 app.MapControllers();
 
 app.Run();

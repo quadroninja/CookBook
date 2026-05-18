@@ -23,7 +23,7 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateDish(IValidator<DishCreateDTO> _validator, [FromForm] DishCreateDTO dto)
+        public async Task<ActionResult<DishCreateResultDTO>> CreateDish(IValidator<DishCreateDTO> _validator, [FromForm] DishCreateDTO dto)
         {
             var validationResult = _validator.Validate(dto);
             if (!validationResult.IsValid)
@@ -35,7 +35,7 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteDish([FromRoute] int id)
+        public async Task<ActionResult> DeleteDish([FromRoute] int id)
         {
             try
             {
@@ -50,12 +50,12 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpGet("get")]
-        public async Task<IActionResult> GetFoodItems(
+        public async Task<ActionResult<List<DishPreviewDTO>>> GetDishes(
             [FromQuery] string? searchBy = null,
             [FromQuery] DishCategory? category = null,
             [FromQuery][ModelBinder(BinderType = typeof(DietaryFlagsModelBinder))] DietaryFlags flags = DietaryFlags.NONE)
         {
-            var items = await _service.GetFoodItemsAsync(
+            var items = await _service.GetDishesAsync(
                 toSearch: searchBy,
                 category: category,
                 flags: flags
@@ -65,7 +65,7 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpPatch("edit/{id}")]
-        public async Task<IActionResult> EditDish([FromRoute] int id, [FromForm] DishEditDTO editDto, IValidator<DishEditDTO> _validator)
+        public async Task<ActionResult<DishEditResultDTO>> EditDish([FromRoute] int id, [FromForm] DishEditDTO editDto, IValidator<DishEditDTO> _validator)
         {
             try
             {
@@ -87,7 +87,7 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpGet("get/{id}")]
-        public async Task<IActionResult> GetDishDetailed([FromRoute] int id)
+        public async Task<ActionResult<DishDetailedDTO>> GetDishDetailed([FromRoute] int id)
         {
             try
             {

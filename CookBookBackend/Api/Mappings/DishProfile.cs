@@ -37,7 +37,8 @@ namespace CookBookBackend.Api.Mappings
                 .ForMember(dest => dest.Ingredients, opt => opt.UseDestinationValue());
 
             CreateMap<Dish, DishDetailedDTO>()
-                .ForMember(dest => dest.PhotoUrls, opt => opt.MapFrom<DishPhotoUrlResolver<DishDetailedDTO>>());
+                .ForMember(dest => dest.PhotoUrls, opt => opt.MapFrom<DishPhotoUrlResolver<DishDetailedDTO>>())
+                .ForMember(dest => dest.Ingredients, opt => opt.Ignore());
             CreateMap<Dish, DishPreviewDTO>()
                 .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom<DishFirstPhotoUrlResolver<DishPreviewDTO>>());
 
@@ -58,7 +59,7 @@ namespace CookBookBackend.Api.Mappings
                     .ForMember(d => d.DietaryFlags,
                         o => o.PreCondition(s => s.DietaryFlags != null))
                     .ForMember(d => d.Ingredients,
-                        o => o.Ignore());
+                        o => { o.PreCondition(s => s.Ingredients != null); o.Ignore(); });
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CookBookBackend.Api.DTO.Dish;
+using CookBookBackend.Api.DTO.DishIngredient;
 using CookBookBackend.Api.DTO.FoodItem;
 using CookBookBackend.Core.Enums;
 using CookBookBackend.Core.Exceptions;
@@ -8,6 +9,7 @@ using CookBookBackend.Data;
 using CookBookBackend.Data.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CookBookBackend.Core.Services
 {
@@ -93,7 +95,7 @@ namespace CookBookBackend.Core.Services
         {
             var toChange = await _context.Dishes
                                 .Include(d => d.Ingredients)
-                                    .ThenInclude(fi => fi.FoodItem)
+                                    .ThenInclude(i => i.FoodItem)
                                 .FirstOrDefaultAsync(d => d.Id == id);
             if (toChange == null)
             {
@@ -103,12 +105,34 @@ namespace CookBookBackend.Core.Services
 
             _mapper.Map(dto, toChange);
 
+            if (dto.Ingredients != null && !dto.Ingredients.Any())
+                throw new ArgumentException("Dish must have at least one ingredient");
+
             if (dto.Ingredients != null)
             {
-                if (!dto.Ingredients.Any())
-                    throw new ArgumentException("Dish must have at least one ingredient");
-                toChange.Ingredients = _mapper.Map<List<DishIngredient>>(dto.Ingredients);
+                toChange.Ingredients = dto.Ingredients.Select((ingredient) => new DishIngredient
+                {
+                    FoodItemId = ingredient.FoodItemId,
+                    DishId = ingredient.DishId,
+                    AmountGrams = ingredient.AmountGrams
+                }).ToList();
             }
+
+            var allFlags = toChange.Ingredients
+                .Select(i => i.FoodItemId)
+                .Select(id => _context.FoodItems
+                    .Where(f => f.Id == id)
+                    .Select(f => f.DietaryFlags)
+                    .FirstOrDefault())
+                .Where(flags => flags != null)
+                .Select(flags => flags)
+                .Distinct()
+                .ToList();
+
+            DietaryFlags commonFlags = allFlags
+                .Aggregate((current, next) => current & next) ?? DietaryFlags.NONE;
+
+            toChange.DietaryFlags = toChange.DietaryFlags & commonFlags; 
 
 
             if (dto.Photos != null && dto.Photos.Any())
@@ -133,7 +157,7 @@ namespace CookBookBackend.Core.Services
             return toReturn;
         }
 
-        public async Task<List<DishPreviewDTO>> GetFoodItemsAsync(string? toSearch, DishCategory? category, DietaryFlags? flags)
+        public async Task<List<DishPreviewDTO>> GetDishesAsync(string? toSearch, DishCategory? category, DietaryFlags? flags)
         {
             var query = _context.Dishes.AsQueryable();
 
@@ -166,13 +190,24 @@ namespace CookBookBackend.Core.Services
 
         public async Task<DishDetailedDTO> GetDishDetailedAsync(int id)
         {
-            var toGet = await _context.Dishes.FindAsync(id);
+            var toGet = await _context.Dishes
+                .Include(d => d.Ingredients)
+                    .ThenInclude(i => i.FoodItem)
+                .FirstOrDefaultAsync(d => d.Id == id);
+
             if (toGet == null)
                 throw new EntityNotFoundException("Dish", id);
 
+            var toReturn = _mapper.Map<DishDetailedDTO>(toGet);
+            toReturn.Ingredients = toGet.Ingredients.Select((ingredient) =>
+                new DishIngredientDetailedDTO
+                {
+                    FoodItemId = ingredient.FoodItemId,
+                    FoodItemName = ingredient.FoodItem.Name,
+                    AmountGrams = ingredient.AmountGrams
+                }).ToList();
 
-
-            return _mapper.Map<DishDetailedDTO>(toGet);
+            return toReturn;
         }
     }
 }

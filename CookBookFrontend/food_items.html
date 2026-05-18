@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="food_items_main.js"></script>
+</head>
+
+<body class="bg-gray-50" >
+    <!-- Container -->
+    <div class="max-w-6xl mx-auto p-6">
+         
+        <!-- Search bar -->
+        <div class="flex gap-2 items-stretch">
+            <input id="searchBar" type="text" class="h-full w-full p-3 border border-gray-200 rounded-lg mb-4" placeholder="🔍 Search...">
+            <button id="searchBtn" class="h-full p-3 bg-blue-500 text-white rounded-lg">Search</button>
+        </div>
+        
+        <!-- Controls row with flex -->
+        <div id="filterArea" class="flex justify-between items-center gap-4 mb-6">
+            <!-- Filters area (left side) -->
+            <div class="flex flex-wrap gap-3 items-start">
+                <button id="addFilterBtn" class="px-4 py-2 border rounded-lg hover:bg-gray-50">+ Add filter</button>
+                <div id="filterContainer" class="flex justify-between items-center gap-4 mb-6"></div>
+
+            </div>
+            
+            <!-- Controls (right side) -->
+            <div class="flex gap-2">
+                <select class="px-4 py-2 border rounded-lg bg-white" id="sortSelect">
+                    <option value="name">Sort by name</option>
+                    <option value="calories">Sort by calories</option>
+                    <option value="carbohydrates">Sort by carbs</option>
+                    <option value="fats">Sort by fats</option>
+                </select>
+                <button class="px-4 py-2 border rounded-lg" id="sortOrderBtn" value="asc">↓ Asc</button>
+                <button id="addFoodItemBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg">+ Add</button>
+            </div>
+        </div>
+        
+        <div id="foodItemsContainer">
+            
+        </div>
+        
+        <!-- Add/Edit Food Item Modal -->
+        <div id="foodItemCreateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <!-- Header -->
+                <div class="flex justify-between items-center p-4 border-b">
+                    <h2 id="modalTitle" class="text-xl font-semibold">Add Food Item</h2>
+                    <button class="text-gray-500 hover:text-gray-700 text-2xl closeCreateModal">&times;</button>
+                </div>
+                
+                <!-- Form -->
+                <form id="foodItemCreateForm" class="p-4 space-y-4">
+                    <input type="hidden" id="editId">
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Name *</label>
+                        <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Calories *</label>
+                            <input type="number" step="0.1" id="calories" required class="w-full px-3 py-2 border rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Proteins *</label>
+                            <input type="number" step="0.1" id="proteins" required class="w-full px-3 py-2 border rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Fats *</label>
+                            <input type="number" step="0.1" id="fats" required class="w-full px-3 py-2 border rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Carbs *</label>
+                            <input type="number" step="0.1" id="carbohydrates" required class="w-full px-3 py-2 border rounded-lg">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Category *</label>
+                        <select id="category" required class="w-full px-3 py-2 border rounded-lg">
+                            
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Readiness *</label>
+                        <select id="readinessToEat" required class="w-full px-3 py-2 border rounded-lg">
+                            
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Contents</label>
+                        <textarea id="contents" rows="3" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Photos</label>
+                        <input type="file" id="photos" multiple accept="image/*" class="w-full">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Dietary Flags</label>
+                        <div id="dietaryFlagsContainer" class="space-y-1">
+                        
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-2">
+                        <button type="submit" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600">Save</button>
+                        <button type="button" class="flex-1 border py-2 rounded-lg hover:bg-gray-50 closeCreateModal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Detail View Modal -->
+        <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <!-- Header -->
+                <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white">
+                    <h2 id="detailTitle" class="text-xl font-semibold">Product Details</h2>
+                    <button class="closeDetailsModal text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <!-- Content -->
+                <div id="detailContent" class="p-4 space-y-4">
+                    <!-- Dynamic content goes here -->
+                </div>
+                
+                <!-- Footer -->
+                <div class="p-4 border-t">
+                    <button class="closeDetailsModal w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+</body> 
+</html>

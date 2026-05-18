@@ -15,7 +15,7 @@ namespace CookBookBackend.Api.Controllers.ModelBinders
             string value = valueProviderResult.FirstValue ?? "";
             if (string.IsNullOrWhiteSpace(value)) return Task.CompletedTask;
 
-            value = value.Replace(",", ".");
+            value = value.Replace(".", ",");
 
             if (decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var result))
             {

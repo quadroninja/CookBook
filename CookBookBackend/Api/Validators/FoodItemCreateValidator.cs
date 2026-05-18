@@ -21,7 +21,7 @@ namespace CookBookBackend.Api.DTO.Validator
                 .Must(photos => photos.Count <= 5)
                 .When(foodItem => foodItem.Photos is not null)
                 .WithMessage($"Maximum 5 photos allowed");
-            RuleFor(foodItem => foodItem.Name)
+            RuleFor(foodItem => foodItem.Name.Trim())
                 .NotEmpty()
                 .WithMessage("Name should not be empty");
             RuleFor(foodItem => foodItem.Calories)
@@ -43,7 +43,11 @@ namespace CookBookBackend.Api.DTO.Validator
                 .GreaterThanOrEqualTo(0)
                 .LessThanOrEqualTo(100m)
                 .WithMessage("Carbohydrates should be in [0; 100]");
-            
+
+            RuleFor(foodItem => foodItem)
+                .Must(fi => fi.Proteins + fi.Fats + fi.Carbohydrates <= 100)
+                .WithMessage("Sum of macronutrients must be less than 100 (g/100g)");
+
             RuleFor(foodItem => foodItem.Category)
                 .NotEqual(FoodItemCategory.NONE)
                 .WithMessage("FoodItemCategory should be specified");

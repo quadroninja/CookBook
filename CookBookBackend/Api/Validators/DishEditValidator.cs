@@ -19,7 +19,6 @@ namespace CookBookBackend.Api.Validators
         }
 
         private readonly AppDbContext _context; // нужно, чтобы проверить, сколько фото уже загружено на момент редактирования
-        private readonly DietaryFlags allDietaryFlagsChecked;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly PhotoService _photoService;
         public DishEditValidator(AppDbContext context, IHttpContextAccessor httpContextAccessor, PhotoService photoService)
@@ -28,11 +27,7 @@ namespace CookBookBackend.Api.Validators
             _httpContextAccessor = httpContextAccessor;
             _photoService = photoService;
 
-            allDietaryFlagsChecked = (DietaryFlags)Enum.GetValues<DietaryFlags>()
-                .Where(f => f != DietaryFlags.NONE)
-                .Select(f => f)
-                .Aggregate((DietaryFlags)0, (current, f) => current | f);
-
+            
             RuleFor(dish => dish.Ingredients)
                 .Must(ingredients => ingredients?.Any() ?? true).WithMessage("A dish must contain at least one ingredient"); // если null - значит не меняем
 
@@ -72,14 +67,6 @@ namespace CookBookBackend.Api.Validators
                 return PhotoVerdict.TOO_MUCH_ADDED;
 
             return PhotoVerdict.CORRECT;
-        }
-
-
-        
-
-        private bool IsValidDietaryFlags(DietaryFlags flags)
-        {
-            return (flags & ~allDietaryFlagsChecked) == 0;  // ~00...01111 = 11...10000, если хотя бы один бит будет из неопределенных в enum-е - в результате будет не ноль
         }
     }
 }

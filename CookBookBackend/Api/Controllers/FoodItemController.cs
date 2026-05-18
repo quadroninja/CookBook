@@ -29,7 +29,7 @@ namespace CookBookBackend.Api.Controllers
 
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateFoodItem([FromServices] IValidator<FoodItemCreateDTO> _validator, [FromForm] FoodItemCreateDTO dto)
+        public async Task<ActionResult<FoodItemCreateResultDTO>> CreateFoodItem([FromServices] IValidator<FoodItemCreateDTO> _validator, [FromForm] FoodItemCreateDTO dto)
         {
             var validationResult = _validator.Validate(dto);
             if (!validationResult.IsValid)
@@ -45,7 +45,7 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteFoodItem([FromRoute]int id)
+        public async Task<ActionResult> DeleteFoodItem([FromRoute]int id)
         {
             try
             {
@@ -65,28 +65,28 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpGet("get")]
-        public async Task<IActionResult> GetFoodItems(
+        public async Task<ActionResult<List<FoodItemPreviewDTO>>> GetFoodItems(
             [FromQuery] string? searchBy = null,
             [FromQuery] string? sortBy = null,
             [FromQuery(Name = "desc")] bool? isSortDescending = false,
-            [FromQuery] FoodItemCategory? category = null,
+            [FromQuery] List<FoodItemCategory>? category = null,
             [FromQuery][ModelBinder(BinderType = typeof(DietaryFlagsModelBinder))] DietaryFlags flags = DietaryFlags.NONE,
-            [FromQuery(Name = "ready")] ReadinessToEat? readinessToEat = null)
+            [FromQuery(Name = "ready")] List<ReadinessToEat>? readinessToEat = null)
         {
             var items = await _service.GetFoodItemsAsync(
                 toSearch: searchBy,
                 sortBy: sortBy,
                 sortDescending: isSortDescending ?? false,
-                category: category,
+                categoryFilters: category,
                 flags: flags,
-                readinessToEat: readinessToEat
+                readinessToEatFilters: readinessToEat
                 );
 
             return Ok(items);
         }
 
         [HttpPatch("edit/{id}")]
-        public async Task<IActionResult> EditFoodItem([FromRoute] int id, [FromForm] FoodItemEditDTO editDto, IValidator<FoodItemEditDTO> _validator)
+        public async Task<ActionResult<FoodItemEditResultDTO>> EditFoodItem([FromRoute] int id, [FromForm] FoodItemEditDTO editDto, IValidator<FoodItemEditDTO> _validator)
         {
             var validationResult = _validator.Validate(editDto);
             if (!validationResult.IsValid)
@@ -103,7 +103,7 @@ namespace CookBookBackend.Api.Controllers
         }
 
         [HttpGet("get/{id}")]
-        public async Task<IActionResult> GetDishDetailed([FromRoute] int id)
+        public async Task<ActionResult<FoodItemDetailedDTO>> GetDishDetailed([FromRoute] int id)
         {
             try
             {

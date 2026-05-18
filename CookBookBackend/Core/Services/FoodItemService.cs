@@ -49,18 +49,17 @@ namespace CookBookBackend.Core.Services
         {
             var toDelete = await _context.FoodItems
                 .Include(f => f.DishesWithThisIngredient)
-                .ThenInclude(di => di.Dish)
+                    .ThenInclude(di => di.Dish)
                 .FirstOrDefaultAsync(fi => fi.Id == id);
 
             if (toDelete == null)
                 throw new EntityNotFoundException("FoodItem", id);
-            
-            var usedInDishes = _context.DishIngredients
-                .Select(di => di.Dish.Name)
-                .ToList();
 
-            if (usedInDishes.Any())
+
+            if (toDelete.DishesWithThisIngredient.Any())
             {
+                var usedInDishes = toDelete.DishesWithThisIngredient
+                    .Select(dwti => dwti.Dish.Name).ToList();
                 throw new FoodItemInUseException(id, toDelete.Name, usedInDishes);
             }
 
@@ -70,13 +69,13 @@ namespace CookBookBackend.Core.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<FoodItemPreviewDTO>> GetFoodItemsAsync(string? toSearch, string? sortBy, bool sortDescending, FoodItemCategory? category, DietaryFlags? flags, ReadinessToEat? readinessToEat)
+        public async Task<List<FoodItemPreviewDTO>> GetFoodItemsAsync(string? toSearch, string? sortBy, bool sortDescending, List<FoodItemCategory>? categoryFilters, DietaryFlags? flags, List<ReadinessToEat>? readinessToEatFilters)
         {
             var query = _context.FoodItems.AsQueryable();
 
-            if (category != null)
+            if (categoryFilters != null)
             {
-                query = query.Where(f => f.Category == category.Value);
+                query = query.Where(f => categoryFilters.Contains(f.Category));
             }
             if (flags != null)
             {
@@ -84,9 +83,9 @@ namespace CookBookBackend.Core.Services
                 query = flags.Value.HasFlag(DietaryFlags.GLUTEN_FREE) ? query.Where(f => (f.DietaryFlags & DietaryFlags.GLUTEN_FREE) != 0) : query;
                 query = flags.Value.HasFlag(DietaryFlags.SUGAR_FREE) ? query.Where(f => (f.DietaryFlags & DietaryFlags.SUGAR_FREE) != 0) : query;
             }
-            if (readinessToEat != null)
+            if (readinessToEatFilters != null)
             {
-                query = query.Where(f => f.ReadinessToEat == readinessToEat.Value);
+                query = query.Where(f => readinessToEatFilters.Contains(f.ReadinessToEat));
             }
 
             if (!string.IsNullOrWhiteSpace(toSearch))
